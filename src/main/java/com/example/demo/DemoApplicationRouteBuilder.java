@@ -12,7 +12,8 @@ public class DemoApplicationRouteBuilder extends RouteBuilder {
 
         // Kafka Route for consuming messages and logging them to the console
         from("kafka:{{kafka.topic}}?brokers={{kafka.host}}:{{kafka.port}}&reconnectBackoffMaxMs={{kafka.timeout}}&groupId={{kafka.groupId}}")
-            .log(LoggingLevel.INFO, "CamelTest", "${body}")
+            .setBody().jsonpath("$.message")
+            .log(LoggingLevel.INFO, "Kafka", "${body}")
             .to("mock:done");
     }
 }
