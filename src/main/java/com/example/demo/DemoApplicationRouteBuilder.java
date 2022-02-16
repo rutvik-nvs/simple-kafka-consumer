@@ -57,7 +57,7 @@ public class DemoApplicationRouteBuilder extends RouteBuilder {
                         public void process(Exchange exchange) throws Exception
                         {
                             String namespace =  exchange.getIn().getHeader("namespace").toString();
-                            hashMap.remove("namespace");
+                            hashMap.put(namespace, "");
                         }
                     })
             .end()
