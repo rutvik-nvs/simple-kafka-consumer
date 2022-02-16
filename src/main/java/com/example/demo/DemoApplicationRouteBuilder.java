@@ -52,6 +52,14 @@ public class DemoApplicationRouteBuilder extends RouteBuilder {
             .choice()
                 .when().simple("${headers.shouldCallErrorDb} == true")
                     .log(LoggingLevel.INFO, "Kafka", "${body}")
+                    .process(new Processor() {
+                        @Override
+                        public void process(Exchange exchange) throws Exception
+                        {
+                            String namespace =  exchange.getIn().getHeader("namespace").toString();
+                            hashMap.remove("namespace");
+                        }
+                    })
             .end()
             .to("mock:done");
     }
