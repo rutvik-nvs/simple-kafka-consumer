@@ -49,7 +49,7 @@ public class DemoApplicationRouteBuilder extends RouteBuilder {
                             }
                         }
                         else{
-                            hashMap.put(namespace, hashMap.get(namespace) != null ? (hashMap.get(namespace).toString() + body) : body);
+                            hashMap.put(namespace, hashMap.get(namespace) != null ? (hashMap.get(namespace).toString() + "\n" + body) : body);
                         }
                     }
                 }
@@ -64,7 +64,7 @@ public class DemoApplicationRouteBuilder extends RouteBuilder {
                             LOGGER.info(exchange.getIn().getBody().toString());
 
                             String namespace =  exchange.getIn().getHeader("namespace").toString();
-                            hashMap.put(namespace, exchange.getIn().getBody().toString());
+                            hashMap.put(namespace, exchange.getIn().getHeader("body").toString());
                         }
                     })
             .end()
