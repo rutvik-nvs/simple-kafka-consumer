@@ -4,9 +4,10 @@ import java.util.HashMap;
 import java.util.regex.Pattern;
 
 import org.apache.camel.Exchange;
-import org.apache.camel.LoggingLevel;
 import org.apache.camel.Processor;
 import org.apache.camel.builder.RouteBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -16,6 +17,8 @@ public class DemoApplicationRouteBuilder extends RouteBuilder {
 
     private static String                   regex           = "\\d{4}-\\d{1,2}-\\d{1,2}";
     private static Pattern                  regexPattern    = Pattern.compile(regex);
+
+    private static Logger                   LOGGER          = LoggerFactory.getLogger(DemoApplicationRouteBuilder.class);
 
     @Override
     public void configure() throws Exception {
@@ -54,11 +57,12 @@ public class DemoApplicationRouteBuilder extends RouteBuilder {
 
             .choice()
                 .when().simple("${headers.shouldCallErrorDb} == true")
-                    .log(LoggingLevel.INFO, "Kafka", "${body}")
                     .process(new Processor() {
                         @Override
                         public void process(Exchange exchange) throws Exception
                         {
+                            LOGGER.info(exchange.getIn().getBody().toString());
+
                             String namespace =  exchange.getIn().getHeader("namespace").toString();
                             hashMap.put(namespace, exchange.getIn().getBody().toString());
                         }
