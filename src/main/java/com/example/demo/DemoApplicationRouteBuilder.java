@@ -30,21 +30,29 @@ public class DemoApplicationRouteBuilder extends RouteBuilder {
                 @Override
                 public void process(Exchange exchange) throws Exception
                 {
-                    String body =       exchange.getIn().getBody().toString();
-                    String namespace =  exchange.getIn().getHeader("namespace").toString();
+                    System.out.println(exchange.getIn().getBody());
+                    System.out.println(exchange.getIn().getHeader("namespace"));
 
-                    // Regex lookup
-                    if(regexPattern.matcher(body.substring(0, 24)).matches()){
-                        exchange.getIn().setBody(hashMap.get("namespace") != null ? hashMap.get("namespace").toString() : "");
-                        if(hashMap.get("namespace") != null){
-                            exchange.getIn().setHeader("shouldCallErrorDb", true);
+                    if(exchange.getIn().getBody() != null && exchange.getIn().getHeader("namespace") != null){
+                        String body =       exchange.getIn().getBody().toString();
+                        String namespace =  exchange.getIn().getHeader("namespace").toString();
+
+                        // Regex lookup
+                        if(regexPattern.matcher(body).matches()){
+                            exchange.getIn().setBody(hashMap.get("namespace") != null ? hashMap.get("namespace").toString() : "");
+                            if(hashMap.get("namespace") != null){
+                                exchange.getIn().setHeader("shouldCallErrorDb", true);
+                            }
+                            else{
+                                exchange.getIn().setHeader("shouldCallErrorDb", false);
+                            }
                         }
                         else{
-                            exchange.getIn().setHeader("shouldCallErrorDb", false);
+                            hashMap.put(namespace, hashMap.get("namespace") != null ? (hashMap.get("namespace").toString() + body) : body);
                         }
                     }
                     else{
-                        hashMap.put(namespace, hashMap.get("namespace") != null ? (hashMap.get("namespace").toString() + body) : body);
+                        System.out.println("Hmm");
                     }
                 }
             })
