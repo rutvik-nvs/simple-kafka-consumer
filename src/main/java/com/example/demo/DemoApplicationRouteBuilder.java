@@ -12,10 +12,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class DemoApplicationRouteBuilder extends RouteBuilder {
 
-    HashMap<String, Object> hashMap         = new HashMap<String, Object>();
+    private static HashMap<String, Object>  hashMap         = new HashMap<String, Object>();
 
-    private static String   regex           = "\\d{4}-\\d{1,2}-\\d{1,2}";
-    private static Pattern  regexPattern    = Pattern.compile(regex);
+    private static String                   regex           = "\\d{4}-\\d{1,2}-\\d{1,2}";
+    private static Pattern                  regexPattern    = Pattern.compile(regex);
 
     @Override
     public void configure() throws Exception {
@@ -23,36 +23,31 @@ public class DemoApplicationRouteBuilder extends RouteBuilder {
         // Kafka Route for consuming messages and logging them to the console
         from("kafka:{{kafka.topic}}?brokers={{kafka.host}}:{{kafka.port}}&reconnectBackoffMaxMs={{kafka.timeout}}&groupId={{kafka.groupId}}")
             
-            .setBody().jsonpath("$.message", true)
+            .setHeader("body").jsonpath("$.message", true)
             .setHeader("namespace").jsonpath("$.kubernetes.namespace_name", true)
 
             .process(new Processor() {
                 @Override
                 public void process(Exchange exchange) throws Exception
                 {
-                    System.out.println(exchange.getIn().getBody());
-                    System.out.println(exchange.getIn().getHeader("namespace"));
-
-                    if(exchange.getIn().getBody() != null && exchange.getIn().getHeader("namespace") != null){
-                        String body =       exchange.getIn().getBody().toString();
+                    if(exchange.getIn().getHeader("body") != null && exchange.getIn().getHeader("namespace") != null){
+                        String body =       exchange.getIn().getHeader("body").toString();
                         String namespace =  exchange.getIn().getHeader("namespace").toString();
 
                         // Regex lookup
-                        if(regexPattern.matcher(body).matches()){
-                            exchange.getIn().setBody(hashMap.get("namespace") != null ? hashMap.get("namespace").toString() : "");
-                            if(hashMap.get("namespace") != null){
+                        if(regexPattern.matcher(body).find()){
+                            exchange.getIn().setBody(hashMap.get(namespace) != null ? hashMap.get(namespace).toString() : "");
+                            if(hashMap.get(namespace) != null){
                                 exchange.getIn().setHeader("shouldCallErrorDb", true);
                             }
                             else{
                                 exchange.getIn().setHeader("shouldCallErrorDb", false);
+                                hashMap.put(namespace, body);
                             }
                         }
                         else{
-                            hashMap.put(namespace, hashMap.get("namespace") != null ? (hashMap.get("namespace").toString() + body) : body);
+                            hashMap.put(namespace, hashMap.get(namespace) != null ? (hashMap.get(namespace).toString() + body) : body);
                         }
-                    }
-                    else{
-                        System.out.println("Hmm");
                     }
                 }
             })
@@ -65,7 +60,7 @@ public class DemoApplicationRouteBuilder extends RouteBuilder {
                         public void process(Exchange exchange) throws Exception
                         {
                             String namespace =  exchange.getIn().getHeader("namespace").toString();
-                            hashMap.put(namespace, "");
+                            hashMap.put(namespace, exchange.getIn().getBody().toString());
                         }
                     })
             .end()
